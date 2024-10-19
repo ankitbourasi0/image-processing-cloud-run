@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast"
 import BG from '../images/BG2.jpg';
+import Image from 'next/image';
 
 const formSchema = z.object({
   file: z.instanceof(File),
@@ -133,7 +134,7 @@ const ImageProcessor: React.FC = () => {
               <FormField
                 control={form.control}
                 name="file"
-                render={({ field }) => (
+                render={({ field: _ }) => (
                   <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
@@ -146,7 +147,7 @@ const ImageProcessor: React.FC = () => {
 
               {previewUrl && (
                 <div className="mt-4">
-                  <img src={previewUrl} alt="Preview" className="max-w-full h-auto rounded-lg shadow-md" />
+                 <Image src={previewUrl} alt="Preview" width={500} height={300} layout="responsive" className="rounded-lg shadow-md" />
                 </div>
               )}
 
@@ -248,7 +249,7 @@ const ImageProcessor: React.FC = () => {
           {processedImageUrl && (
             <div className="mt-6 p-4 bg-white rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Processed Image</h3>
-              <img src={processedImageUrl} alt="Processed" className="max-w-full h-auto rounded-lg shadow-md" />
+              <Image src={processedImageUrl} alt="Processed" width={500} height={300} layout="responsive" className="rounded-lg shadow-md" />
               <Button asChild className="mt-4 bg-green-500 hover:bg-green-600">
                 <a href={processedImageUrl} download>
                   <ImageIcon className="mr-2 h-4 w-4" />
