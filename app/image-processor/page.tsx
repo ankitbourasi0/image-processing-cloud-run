@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast"
 import BG from '../images/BG2.jpg';
 import Image from 'next/image';
-import Head from 'next/head';
+
 
 const formSchema = z.object({
   file: z.instanceof(File).nullable(),
