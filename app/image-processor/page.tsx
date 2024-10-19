@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,7 +15,7 @@ import BG from '../images/BG2.jpg';
 import Image from 'next/image';
 
 const formSchema = z.object({
-  file: z.instanceof(File),
+  file: z.instanceof(File).nullable(),
   operation: z.enum(['jpg-to-png', 'png-to-jpg', 'compress-jpg', 'compress-png', 'resize']),
   quality: z.number().min(1).max(100).optional(),
   width: z.number().min(1).max(10000).optional(),
@@ -28,6 +28,7 @@ const ImageProcessor: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -41,10 +42,33 @@ const ImageProcessor: React.FC = () => {
     },
   });
 
+  const fileType = form.watch('file')?.type;
+  const selectedOperation = form.watch('operation');
+  const isValidFileType = () => {
+    if (!fileType) return false;
+    switch (selectedOperation) {
+      case 'jpg-to-png':
+      case 'compress-jpg':
+        return fileType === 'image/jpeg';
+      case 'png-to-jpg':
+      case 'compress-png':
+        return fileType === 'image/png';
+      case 'resize':
+        return fileType.startsWith('image/');
+      default:
+        return false;
+    }
+  };
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     setError(null);
 
+    
+  if (!values.file) {
+    setError('No file selected');
+    setIsLoading(false);
+    return;
+  }
     const formData = new FormData();
     formData.append('file', values.file);
 
@@ -78,7 +102,8 @@ const ImageProcessor: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to process image');
+        const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
       }
 
       const blob = await response.blob();
@@ -110,16 +135,25 @@ const ImageProcessor: React.FC = () => {
       form.setValue('file', file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+    } else {
+      form.setValue('file', null);
+      setPreviewUrl(null);
     }
   };
 
   useEffect(() => {
-    return () => {
-      if (processedImageUrl) {
-        URL.revokeObjectURL(processedImageUrl);
-      }
-    };
-  }, [processedImageUrl]);
+    // Clear preview and processed images when operation changes
+    setPreviewUrl(null);
+    setProcessedImageUrl(null);
+    
+    // Clear the file input
+    form.setValue('file', null);
+    
+    // Reset the file input element
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [form.watch('operation')]);
 
   return (
     <div className="min-h-screen w-full bg-cover bg-center p-8" style={{ backgroundImage: `url(${BG.src})` }}>
@@ -138,7 +172,7 @@ const ImageProcessor: React.FC = () => {
                   <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
-                      <Input type="file" accept="image/*" onChange={handleFileChange} className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                      <Input type="file" accept="image/*"  ref={fileInputRef} onChange={handleFileChange} className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,7 +257,7 @@ const ImageProcessor: React.FC = () => {
                 </>
               )}
 
-              <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
+              <Button type="submit" disabled={isLoading || !form.watch('file') || !isValidFileType()}  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white">
                 {isLoading ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -238,6 +272,15 @@ const ImageProcessor: React.FC = () => {
               </Button>
             </form>
           </Form>
+
+          {!isValidFileType() && form.watch('file') && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Invalid File Type</AlertTitle>
+              <AlertDescription>
+                The selected file type does not match the chosen operation. Please select a {selectedOperation.includes('jpg') ? 'JPG' : 'PNG'} file.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {error && (
             <Alert variant="destructive" className="mt-4">
