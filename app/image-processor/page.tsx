@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast"
 import BG from '../images/BG2.jpg';
 import Image from 'next/image';
+import Head from 'next/head';
 
 const formSchema = z.object({
   file: z.instanceof(File).nullable(),
@@ -157,6 +158,7 @@ const ImageProcessor: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-cover bg-center p-8" style={{ backgroundImage: `url(${BG.src})` }}>
+     
       <Card className="w-full max-w-2xl mx-auto shadow-xl bg-white/90 backdrop-blur-sm">
         <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-xl text-white">
           <CardTitle className="text-2xl font-bold">Image Processor</CardTitle>
