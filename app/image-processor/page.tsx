@@ -134,7 +134,7 @@ const ImageProcessor: React.FC = () => {
               <FormField
                 control={form.control}
                 name="file"
-                render={({ field: _ }) => (
+                render={({ }) => (
                   <FormItem>
                     <FormLabel>Upload Image</FormLabel>
                     <FormControl>
